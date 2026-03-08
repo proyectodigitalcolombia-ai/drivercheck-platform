@@ -7,25 +7,67 @@ export default function Page(){
   const [document,setDocument] = useState("")
   const [report,setReport] = useState(null)
   const [history,setHistory] = useState([])
+  const [progress,setProgress] = useState(0)
+  const [loading,setLoading] = useState(false)
+  const [view,setView] = useState("dashboard")
 
   const consultar = async () => {
 
     if(!document) return
 
-    const res = await fetch(`https://drivercheck-platform.onrender.com/api/drivers/check/${document}`)
-    const data = await res.json()
+    setLoading(true)
+    setProgress(0)
 
-    setReport(data)
+    let value = 0
 
-    setHistory(prev => [
-      {
-        name:data.person.name,
-        document:data.person.document,
-        score:data.score,
-        date:new Date().toLocaleString()
-      },
-      ...prev
-    ])
+    const interval = setInterval(()=>{
+
+      value += 5
+
+      if(value >= 95){
+        value = 95
+      }
+
+      setProgress(value)
+
+    },200)
+
+    try{
+
+      const res = await fetch(`https://drivercheck-platform.onrender.com/api/drivers/check/${document}`)
+      const data = await res.json()
+
+      clearInterval(interval)
+
+      setProgress(100)
+
+      setTimeout(()=>{
+
+        setLoading(false)
+
+      },500)
+
+      setReport(data)
+
+      setHistory(prev => [
+
+        {
+          name:data.person.name,
+          document:data.person.document,
+          score:data.score,
+          date:new Date().toLocaleString()
+        },
+
+        ...prev
+
+      ])
+
+    }catch(error){
+
+      clearInterval(interval)
+      setLoading(false)
+
+    }
 
   }
 
@@ -59,19 +101,31 @@ export default function Page(){
           DriverCheck
         </h2>
 
-        <div style={{marginBottom:"20px"}}>
+        <div
+          style={{marginBottom:"20px",cursor:"pointer"}}
+          onClick={()=>setView("dashboard")}
+        >
           Dashboard
         </div>
 
-        <div style={{marginBottom:"20px"}}>
+        <div
+          style={{marginBottom:"20px",cursor:"pointer"}}
+          onClick={()=>setView("consultas")}
+        >
           Consultas
         </div>
 
-        <div style={{marginBottom:"20px"}}>
+        <div
+          style={{marginBottom:"20px",cursor:"pointer"}}
+          onClick={()=>setView("reportes")}
+        >
           Reportes
         </div>
 
-        <div style={{marginBottom:"20px"}}>
+        <div
+          style={{marginBottom:"20px",cursor:"pointer"}}
+          onClick={()=>setView("riesgo")}
+        >
           Riesgo
         </div>
 
@@ -88,231 +142,253 @@ export default function Page(){
           Plataforma de Inteligencia de Conductores
         </h1>
 
-        {/* CONSULTA */}
+        {/* DASHBOARD */}
 
-        <div style={{
-          background:"#1e293b",
-          padding:"25px",
-          borderRadius:"10px",
-          width:"400px",
-          marginBottom:"40px"
-        }}>
+        {view === "dashboard" && (
 
-          <h3>Consultar Conductor</h3>
+          <div>
 
-          <input
-            value={document}
-            onChange={(e)=>setDocument(e.target.value)}
-            placeholder="Número de documento"
-            style={{
-              width:"100%",
-              padding:"10px",
-              marginTop:"10px",
-              marginBottom:"10px",
-              borderRadius:"6px",
-              border:"none"
-            }}
-          />
+            <div style={{
+              background:"#1e293b",
+              padding:"25px",
+              borderRadius:"10px",
+              width:"400px",
+              marginBottom:"40px"
+            }}>
 
-          <button
-            onClick={consultar}
-            style={{
-              width:"100%",
-              padding:"10px",
-              background:"#2563eb",
-              border:"none",
-              color:"white",
-              borderRadius:"6px",
-              cursor:"pointer"
-            }}
-          >
-            Analizar Riesgo
-          </button>
+              <h3>Consultar Conductor</h3>
 
-        </div>
+              <input
+                value={document}
+                onChange={(e)=>setDocument(e.target.value)}
+                placeholder="Número de documento"
+                style={{
+                  width:"100%",
+                  padding:"10px",
+                  marginTop:"10px",
+                  marginBottom:"10px",
+                  borderRadius:"6px",
+                  border:"none"
+                }}
+              />
 
-        {/* REPORTE */}
+              <button
+                onClick={consultar}
+                style={{
+                  width:"100%",
+                  padding:"10px",
+                  background:"#2563eb",
+                  border:"none",
+                  color:"white",
+                  borderRadius:"6px",
+                  cursor:"pointer"
+                }}
+              >
+                Analizar Riesgo
+              </button>
 
-        {report && (
+            </div>
 
-          <div style={{
-            background:"#1e293b",
-            padding:"30px",
-            borderRadius:"10px",
-            marginBottom:"40px"
-          }}>
+            {/* BARRA DE PROGRESO */}
 
-            <h2>Reporte de Inteligencia</h2>
+            {loading && (
 
-            <p><b>Nombre:</b> {report.person.name}</p>
-            <p><b>Documento:</b> {report.person.document}</p>
-            <p><b>Fecha:</b> {new Date(report.date).toLocaleString()}</p>
+              <div style={{
+                background:"#1e293b",
+                padding:"20px",
+                borderRadius:"10px",
+                marginBottom:"30px",
+                maxWidth:"800px"
+              }}>
 
-            <h2 style={{marginTop:"20px"}}>
-              Score de Riesgo
-            </h2>
+                <h3>Consultando bases de datos...</h3>
 
-            {(() => {
-
-              const risk = getRisk(report.score)
-
-              return(
-
-                <div>
+                <div style={{
+                  width:"100%",
+                  height:"25px",
+                  background:"#020617",
+                  borderRadius:"10px",
+                  marginTop:"10px"
+                }}>
 
                   <div style={{
-                    fontSize:"24px",
-                    fontWeight:"bold",
-                    color:risk.color
-                  }}>
-                    RIESGO {risk.label}
-                  </div>
-
-                  <div style={{
-                    width:"100%",
+                    width:`${progress}%`,
                     height:"25px",
-                    background:"#020617",
+                    background:"#22c55e",
                     borderRadius:"10px",
-                    marginTop:"10px"
-                  }}>
-
-                    <div style={{
-                      width:`${report.score}%`,
-                      height:"25px",
-                      background:risk.color,
-                      borderRadius:"10px"
-                    }}></div>
-
-                  </div>
-
-                  <p style={{marginTop:"10px"}}>
-                    {report.score} / 100
-                  </p>
+                    transition:"width 0.3s"
+                  }}></div>
 
                 </div>
 
-              )
+                <p style={{marginTop:"10px"}}>
+                  {progress} %
+                </p>
 
-            })()}
-
-            <h2 style={{marginTop:"30px"}}>
-              Fuentes Consultadas
-            </h2>
-
-            {report.sources.map((s,i)=>(
-
-              <div key={i} style={{
-                background:"#020617",
-                padding:"15px",
-                borderRadius:"6px",
-                marginTop:"10px"
-              }}>
-                <b>{s.source}</b>
-                <p>{s.result}</p>
               </div>
 
-            ))}
+            )}
 
-            <button
-              onClick={() =>
-                window.open(
-                  `https://drivercheck-platform.onrender.com/api/drivers/report/${report.person.document}`,
-                  "_blank"
-                )
-              }
-              style={{
-                marginTop:"30px",
-                padding:"12px 25px",
-                background:"#dc2626",
-                border:"none",
-                color:"white",
-                borderRadius:"6px",
-                cursor:"pointer"
-              }}
-            >
-              Descargar Reporte PDF
-            </button>
+            {/* REPORTE */}
+
+            {report && !loading && (
+
+              <div style={{
+                background:"#1e293b",
+                padding:"30px",
+                borderRadius:"10px",
+                marginBottom:"40px"
+              }}>
+
+                <h2>Reporte de Inteligencia</h2>
+
+                <p><b>Nombre:</b> {report.person.name}</p>
+                <p><b>Documento:</b> {report.person.document}</p>
+                <p><b>Fecha:</b> {new Date(report.date).toLocaleString()}</p>
+
+                <h2 style={{marginTop:"20px"}}>
+                  Score de Riesgo
+                </h2>
+
+                {(() => {
+
+                  const risk = getRisk(report.score)
+
+                  return(
+
+                    <div>
+
+                      <div style={{
+                        fontSize:"24px",
+                        fontWeight:"bold",
+                        color:risk.color
+                      }}>
+                        RIESGO {risk.label}
+                      </div>
+
+                      <div style={{
+                        width:"100%",
+                        height:"25px",
+                        background:"#020617",
+                        borderRadius:"10px",
+                        marginTop:"10px"
+                      }}>
+
+                        <div style={{
+                          width:`${report.score}%`,
+                          height:"25px",
+                          background:risk.color,
+                          borderRadius:"10px"
+                        }}></div>
+
+                      </div>
+
+                      <p style={{marginTop:"10px"}}>
+                        {report.score} / 100
+                      </p>
+
+                    </div>
+
+                  )
+
+                })()}
+
+                <h2 style={{marginTop:"30px"}}>
+                  Fuentes Consultadas
+                </h2>
+
+                {report.sources.map((s,i)=>(
+
+                  <div key={i} style={{
+                    background:"#020617",
+                    padding:"15px",
+                    borderRadius:"6px",
+                    marginTop:"10px"
+                  }}>
+                    <b>{s.source}</b>
+                    <p>{s.result}</p>
+                  </div>
+
+                ))}
+
+                <button
+                  onClick={() =>
+                    window.open(
+                      `https://drivercheck-platform.onrender.com/api/drivers/report/${report.person.document}`,
+                      "_blank"
+                    )
+                  }
+                  style={{
+                    marginTop:"30px",
+                    padding:"12px 25px",
+                    background:"#dc2626",
+                    border:"none",
+                    color:"white",
+                    borderRadius:"6px",
+                    cursor:"pointer"
+                  }}
+                >
+                  Descargar Reporte PDF
+                </button>
+
+              </div>
+
+            )}
 
           </div>
 
         )}
 
-        {/* HISTORIAL */}
+        {/* CONSULTAS */}
 
-        {history.length > 0 && (
+        {view === "consultas" && (
 
-          <div style={{
-            background:"#1e293b",
-            padding:"30px",
-            borderRadius:"10px"
-          }}>
+          <div>
 
             <h2>Historial de Consultas</h2>
 
-            <table style={{
-              width:"100%",
-              marginTop:"20px",
-              borderCollapse:"collapse"
-            }}>
+            {history.length === 0 && (
+              <p>No hay consultas registradas</p>
+            )}
 
-              <thead>
+            {history.map((h,i)=>(
 
-                <tr>
+              <div key={i} style={{
+                background:"#1e293b",
+                padding:"15px",
+                borderRadius:"6px",
+                marginTop:"10px"
+              }}>
 
-                  <th style={{textAlign:"left",padding:"10px"}}>
-                    Nombre
-                  </th>
+                <p><b>{h.name}</b></p>
+                <p>Documento: {h.document}</p>
+                <p>Score: {h.score}</p>
+                <p>Fecha: {h.date}</p>
 
-                  <th style={{textAlign:"left",padding:"10px"}}>
-                    Documento
-                  </th>
+              </div>
 
-                  <th style={{textAlign:"left",padding:"10px"}}>
-                    Score
-                  </th>
-
-                  <th style={{textAlign:"left",padding:"10px"}}>
-                    Fecha
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {history.map((h,i)=>(
-
-                  <tr key={i} style={{
-                    borderTop:"1px solid #334155"
-                  }}>
-
-                    <td style={{padding:"10px"}}>
-                      {h.name}
-                    </td>
-
-                    <td style={{padding:"10px"}}>
-                      {h.document}
-                    </td>
-
-                    <td style={{padding:"10px"}}>
-                      {h.score}
-                    </td>
-
-                    <td style={{padding:"10px"}}>
-                      {h.date}
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
+            ))}
 
           </div>
 
+        )}
+
+        {/* REPORTES */}
+
+        {view === "reportes" && (
+          <div>
+            <h2>Reportes</h2>
+            <p>Aquí podrás administrar reportes generados.</p>
+          </div>
+        )}
+
+        {/* RIESGO */}
+
+        {view === "riesgo" && (
+          <div>
+            <h2>Panel de Riesgo</h2>
+            <p>Estadísticas de conductores analizados.</p>
+          </div>
         )}
 
       </div>
