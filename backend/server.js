@@ -1,21 +1,28 @@
-const express = require("express")
-const cors = require("cors")
-
-const driverRoutes = require("./routes/drivers")
-
-const app = express()
-
-app.use(cors())
-app.use(express.json())
-
-app.use("/api/drivers", driverRoutes)
-
-app.get("/", (req,res)=>{
-  res.json({message:"DriverCheck Platform API"})
-})
-
-const PORT = process.env.PORT || 10000
-
-app.listen(PORT, ()=>{
-  console.log("Server running on port",PORT)
-})
+{
+  "name": "drivercheck-backend",
+  "version": "1.0.0",
+  "description": "DriverCheck API Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "drivercheck",
+    "api",
+    "verification"
+  ],
+  "author": "DriverCheck",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
