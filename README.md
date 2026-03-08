@@ -1,23 +1,18 @@
 # DriverCheck Platform
 
-AI-powered driver background verification platform for Colombia.
+AI-powered driver verification platform.
 
 Features:
 
-- Driver background verification
-- Police record validation
-- Procuraduría sanction check
-- AI risk scoring
+- Driver background check
+- Police verification
+- Procuraduría verification
+- AI risk score
 - API integration
-- SaaS ready platform
 
-Architecture:
+Stack:
 
 Frontend: Next.js  
-Backend: Node.js API  
-AI Engine: Risk scoring  
-Database: PostgreSQL
-
-API Example:
-
-GET /api/drivers/check/:document
+Backend: Node.js (Express)  
+Database: PostgreSQL  
+Deploy: Render
