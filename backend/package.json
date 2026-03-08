@@ -1,9 +1,181 @@
-{
-  "name": "drivercheck-backend",
-  "version": "1.0.0",
-  "main": "server.js",
-  "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+"use client"
+
+import { useState } from "react"
+
+export default function Home(){
+
+  const [document,setDocument] = useState("")
+  const [result,setResult] = useState(null)
+  const [loading,setLoading] = useState(false)
+  const [error,setError] = useState(null)
+
+  const checkDriver = async () => {
+
+    if(!document){
+      alert("Ingrese un documento")
+      return
+    }
+
+    try{
+
+      setLoading(true)
+      setError(null)
+      setResult(null)
+
+      const response = await fetch(`https://drivercheck-platform.onrender.com/api/drivers/check/${document}`)
+
+      if(!response.ok){
+        throw new Error("Error consultando la API")
+      }
+
+      const data = await response.json()
+
+      setResult(data)
+
+    }catch(err){
+
+      setError("No fue posible realizar la consulta")
+
+    }finally{
+
+      setLoading(false)
+
+    }
+
   }
+
+  return(
+
+    <div style={{
+      padding:"40px",
+      fontFamily:"Arial",
+      background:"#f5f6fa",
+      minHeight:"100vh"
+    }}>
+
+      <h1 style={{marginBottom:"20px"}}>
+        DriverCheck Platform
+      </h1>
+
+      <div style={{
+        background:"#fff",
+        padding:"20px",
+        borderRadius:"10px",
+        width:"400px",
+        boxShadow:"0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+
+        <h3>Consultar Conductor</h3>
+
+        <input
+          type="text"
+          value={document}
+          onChange={(e)=>setDocument(e.target.value)}
+          placeholder="Ingrese documento"
+          style={{
+            width:"100%",
+            padding:"10px",
+            marginTop:"10px",
+            border:"1px solid #ccc",
+            borderRadius:"6px"
+          }}
+        />
+
+        <button
+          onClick={checkDriver}
+          style={{
+            marginTop:"15px",
+            width:"100%",
+            padding:"10px",
+            background:"#2f80ed",
+            color:"#fff",
+            border:"none",
+            borderRadius:"6px",
+            cursor:"pointer"
+          }}
+        >
+          Verificar conductor
+        </button>
+
+      </div>
+
+      {loading && (
+        <p style={{marginTop:"20px"}}>
+          Consultando fuentes oficiales...
+        </p>
+      )}
+
+      {error && (
+        <p style={{marginTop:"20px",color:"red"}}>
+          {error}
+        </p>
+      )}
+
+      {result && (
+
+        <div style={{
+          marginTop:"30px",
+          background:"#ffffff",
+          padding:"30px",
+          border:"1px solid #ddd",
+          borderRadius:"10px",
+          width:"650px",
+          boxShadow:"0 2px 8px rgba(0,0,0,0.1)"
+        }}>
+
+          <h2 style={{marginBottom:"20px"}}>
+            Reporte de Verificación de Conductor
+          </h2>
+
+          <p>
+            <b>Nombre del consultado:</b> {result.person.name}
+          </p>
+
+          <p>
+            <b>Documento:</b> {result.person.document}
+          </p>
+
+          <p>
+            <b>Fecha de consulta:</b> {new Date(result.date).toLocaleString()}
+          </p>
+
+          <hr style={{margin:"20px 0"}}/>
+
+          <h3>Fuentes Oficiales Consultadas</h3>
+
+          {result.sources.map((s,i)=>(
+
+            <div key={i} style={{marginBottom:"15px"}}>
+
+              <p>
+                <b>Fuente:</b> {s.source}
+              </p>
+
+              <p>
+                <b>Resultado:</b> {s.result}
+              </p>
+
+            </div>
+
+          ))}
+
+          <hr style={{margin:"20px 0"}}/>
+
+          <h3>Score de Riesgo</h3>
+
+          <p style={{
+            fontSize:"20px",
+            fontWeight:"bold"
+          }}>
+            {result.score}
+          </p>
+
+        </div>
+
+      )}
+
+    </div>
+
+  )
+
 }
