@@ -131,32 +131,62 @@ function generateReport(res, report){
 
   report.sources.forEach(source => {
 
-    doc
-      .moveTo(50, doc.y)
-      .lineTo(550, doc.y)
-      .strokeColor("#cccccc")
-      .stroke()
+    /* linea gris superior */
 
     doc.moveDown()
 
     doc
-      .fontSize(16)
-      .fillColor("#000000")
-      .text(source.source)
+      .moveTo(50, doc.y)
+      .lineTo(550, doc.y)
+      .strokeColor("#d1d5db")
+      .lineWidth(1)
+      .stroke()
+
+    doc.moveDown()
+
+    /* nombre fuente centrado */
 
     doc
-      .fontSize(10)
-      .fillColor("#666666")
-      .text("Resultado de verificación")
+      .fontSize(15)
+      .fillColor("#000000")
+      .text(source.source,{
+        align:"center"
+      })
 
-    doc.moveDown(0.5)
+    doc.moveDown()
+
+    /* linea gris inferior */
+
+    doc
+      .moveTo(50, doc.y)
+      .lineTo(550, doc.y)
+      .strokeColor("#d1d5db")
+      .lineWidth(1)
+      .stroke()
+
+    doc.moveDown()
+
+    /* titulo resultado */
 
     doc
       .fontSize(11)
-      .fillColor("#000000")
-      .text(source.result)
+      .fillColor("#444444")
+      .text("Resultado de verificación",{
+        align:"center"
+      })
 
-    doc.moveDown(1.5)
+    doc.moveDown(0.5)
+
+    /* resultado */
+
+    doc
+      .fontSize(12)
+      .fillColor("#000000")
+      .text(source.result,{
+        align:"center"
+      })
+
+    doc.moveDown(2)
 
   })
 
