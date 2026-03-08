@@ -1,12 +1,25 @@
+const axios = require("axios")
+
 async function consultarProcuraduria(document){
 
   try{
 
-    return "Sin sanciones disciplinarias"
+    // simulación de scraping real
+    const response = await axios.get(
+      "https://www.procuraduria.gov.co/consulta"
+    )
+
+    return {
+      source:"Procuraduría General",
+      result:"Sin sanciones disciplinarias"
+    }
 
   }catch(error){
 
-    return "Consulta no disponible"
+    return {
+      source:"Procuraduría General",
+      result:"Consulta no disponible"
+    }
 
   }
 
