@@ -1,7 +1,8 @@
 const PDFDocument = require("pdfkit")
 const crypto = require("crypto")
+const QRCode = require("qrcode")
 
-function generateReport(res, report){
+async function generateReport(res, report){
 
   const doc = new PDFDocument({
     margin:50,
@@ -14,6 +15,13 @@ function generateReport(res, report){
     .createHash("sha256")
     .update(report.person.document + report.date)
     .digest("hex")
+
+  const verificationURL =
+    `https://drivercheck-platform.onrender.com/verify/${reportId}`
+
+  const qrImage = await QRCode.toDataURL(verificationURL)
+  const qrBase64 = qrImage.replace(/^data:image\/png;base64,/, "")
+  const qrBuffer = Buffer.from(qrBase64,"base64")
 
   res.setHeader("Content-Type","application/pdf")
 
@@ -97,20 +105,43 @@ function generateReport(res, report){
     .fontSize(13)
     .text("EVALUACIÓN DE RIESGO")
 
-  doc.moveDown(0.5)
+  doc.moveDown()
+
+  let riskColor = "#16a34a"
+  let risk = "BAJO"
+
+  if(report.score < 80){
+    risk = "MEDIO"
+    riskColor = "#f59e0b"
+  }
+
+  if(report.score < 50){
+    risk = "ALTO"
+    riskColor = "#dc2626"
+  }
 
   doc
     .fontSize(11)
     .text(`Score de Riesgo: ${report.score} / 100`)
 
-  let risk = "BAJO"
-
-  if(report.score < 80) risk = "MEDIO"
-  if(report.score < 50) risk = "ALTO"
-
-  doc.text(`Nivel de Riesgo: ${risk}`)
+  doc
+    .text(`Nivel de Riesgo: ${risk}`)
 
   doc.moveDown()
+
+  /* BARRA DE RIESGO */
+
+  doc
+    .rect(50, doc.y, 500, 15)
+    .strokeColor("#cccccc")
+    .stroke()
+
+  doc
+    .rect(50, doc.y, report.score * 5, 15)
+    .fillColor(riskColor)
+    .fill()
+
+  doc.moveDown(2)
 
   doc
     .moveTo(50, doc.y)
@@ -131,53 +162,41 @@ function generateReport(res, report){
 
   report.sources.forEach(source => {
 
-    /* linea gris superior */
-
-    doc.moveDown()
-
     doc
-      .moveTo(50, doc.y)
-      .lineTo(550, doc.y)
-      .strokeColor("#d1d5db")
-      .lineWidth(1)
+      .moveTo(70, doc.y)
+      .lineTo(525, doc.y)
+      .strokeColor("#9ca3af")
+      .lineWidth(1.5)
       .stroke()
 
-    doc.moveDown()
-
-    /* nombre fuente centrado */
+    doc.moveDown(0.3)
 
     doc
-      .fontSize(15)
+      .fontSize(14)
       .fillColor("#000000")
       .text(source.source,{
         align:"center"
       })
 
-    doc.moveDown()
-
-    /* linea gris inferior */
+    doc.moveDown(0.3)
 
     doc
-      .moveTo(50, doc.y)
-      .lineTo(550, doc.y)
-      .strokeColor("#d1d5db")
-      .lineWidth(1)
+      .moveTo(70, doc.y)
+      .lineTo(525, doc.y)
+      .strokeColor("#9ca3af")
+      .lineWidth(1.5)
       .stroke()
 
-    doc.moveDown()
-
-    /* titulo resultado */
+    doc.moveDown(0.8)
 
     doc
-      .fontSize(11)
-      .fillColor("#444444")
+      .fontSize(10)
+      .fillColor("#555555")
       .text("Resultado de verificación",{
         align:"center"
       })
 
-    doc.moveDown(0.5)
-
-    /* resultado */
+    doc.moveDown(0.3)
 
     doc
       .fontSize(12)
@@ -186,7 +205,7 @@ function generateReport(res, report){
         align:"center"
       })
 
-    doc.moveDown(2)
+    doc.moveDown(1.5)
 
   })
 
@@ -222,8 +241,26 @@ function generateReport(res, report){
 
   doc.moveDown()
 
+  /* QR */
+
   doc
-    .text(`HASH DE AUDITORÍA:`)
+    .fontSize(10)
+    .text("Verificación del reporte")
+
+  doc.image(qrBuffer,50,doc.y,{
+    width:90
+  })
+
+  doc.moveDown(5)
+
+  doc
+    .fontSize(8)
+    .text(`URL: ${verificationURL}`)
+
+  doc.moveDown()
+
+  doc
+    .text("HASH DE AUDITORÍA:")
 
   doc
     .fontSize(8)
