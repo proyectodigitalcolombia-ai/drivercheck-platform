@@ -1,6 +1,8 @@
 const PDFDocument = require("pdfkit")
+const crypto = require("crypto")
+const QRCode = require("qrcode")
 
-function generateReport(res,report){
+async function generateReport(res,report){
 
   const doc = new PDFDocument({
     margin:50
@@ -8,10 +10,21 @@ function generateReport(res,report){
 
   const reportId = "DRV-" + Date.now()
 
+  const hash = crypto
+    .createHash("sha256")
+    .update(report.person.document + report.date)
+    .digest("hex")
+
+  const verificationURL =
+    `https://drivercheck-platform.onrender.com/verify/${reportId}`
+
+  const qrImage = await QRCode.toDataURL(verificationURL)
+
   res.setHeader("Content-Type","application/pdf")
+
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename=drivercheck-report-${report.person.document}.pdf`
+    `attachment; filename=drivercheck-audit-${report.person.document}.pdf`
   )
 
   doc.pipe(res)
@@ -19,11 +32,13 @@ function generateReport(res,report){
   /* HEADER */
 
   doc
-    .fontSize(22)
-    .text("DRIVERCHECK", {align:"left"})
+    .fontSize(24)
+    .text("DRIVERCHECK",{
+      align:"left"
+    })
 
   doc
-    .fontSize(12)
+    .fontSize(11)
     .text("Plataforma de Inteligencia y Verificación de Conductores")
 
   doc.moveDown()
@@ -46,7 +61,9 @@ function generateReport(res,report){
 
   doc
     .fontSize(18)
-    .text("INFORME DE VERIFICACIÓN DE CONDUCTOR",{align:"center"})
+    .text("INFORME DE VERIFICACIÓN DE CONDUCTOR",{
+      align:"center"
+    })
 
   doc.moveDown()
 
@@ -74,6 +91,7 @@ function generateReport(res,report){
   doc.text(`Score de Riesgo: ${report.score} / 100`)
 
   let risk = "BAJO"
+
   if(report.score < 80) risk = "MEDIO"
   if(report.score < 50) risk = "ALTO"
 
@@ -81,7 +99,7 @@ function generateReport(res,report){
 
   doc.moveDown()
 
-  /* FUENTES */
+  /* TABLA FUENTES */
 
   doc
     .fontSize(12)
@@ -93,7 +111,7 @@ function generateReport(res,report){
 
     doc
       .fontSize(11)
-      .text(`${source.source}`)
+      .text(`Fuente: ${source.source}`)
 
     doc
       .fontSize(10)
@@ -120,30 +138,63 @@ function generateReport(res,report){
   doc.moveDown()
 
   doc
-    .text("El presente documento puede utilizarse como soporte de verificación de antecedentes en procesos de selección, contratación o evaluación de conductores.")
+    .text("Puede utilizarse como soporte documental en procesos de auditoría, selección o evaluación de conductores.")
+
+  doc.moveDown()
+
+  /* QR */
+
+  const qrBase64 = qrImage.replace(/^data:image\/png;base64,/, "")
+  const qrBuffer = Buffer.from(qrBase64,"base64")
+
+  doc
+    .fontSize(10)
+    .text("Código de Verificación:")
+
+  doc.image(qrBuffer,50,500,{
+    width:100
+  })
+
+  doc.moveDown()
+
+  doc
+    .fontSize(9)
+    .text(`URL verificación: ${verificationURL}`)
+
+  doc.moveDown()
+
+  /* HASH */
+
+  doc
+    .fontSize(9)
+    .text(`HASH DE AUDITORÍA:`)
+
+  doc
+    .fontSize(8)
+    .text(hash)
 
   doc.moveDown()
 
   /* FOOTER */
 
   doc
-    .moveTo(50,650)
-    .lineTo(550,650)
+    .moveTo(50,700)
+    .lineTo(550,700)
     .stroke()
 
   doc.moveDown()
 
   doc
-    .fontSize(9)
-    .text(`Reporte generado por DriverCheck Intelligence Platform`)
-    .text(`ID auditoría: ${reportId}`)
-    .text(`Fecha generación: ${new Date().toLocaleString()}`)
+    .fontSize(8)
+    .text("Advertencia Legal:")
+
+  doc
+    .text("La información contenida en este documento proviene de fuentes públicas o registros administrativos. DriverCheck no altera ni modifica los datos obtenidos de dichas fuentes.")
 
   doc.moveDown()
 
   doc
-    .fontSize(8)
-    .text("Advertencia: La información contenida en este documento proviene de fuentes públicas o registros administrativos. DriverCheck no altera ni modifica los datos obtenidos de dichas fuentes.")
+    .text(`Reporte generado automáticamente por DriverCheck Intelligence Platform.`)
 
   doc.end()
 
