@@ -2,88 +2,69 @@
 
 import { useState } from "react"
 
-export default function Home() {
+export default function Page(){
 
-  const [document, setDocument] = useState("")
-  const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [document,setDocument] = useState("")
+  const [report,setReport] = useState(null)
 
-  const checkDriver = async () => {
+  const consultar = async () => {
 
-    if (!document) {
-      alert("Ingrese un documento")
-      return
-    }
+    const res = await fetch(`https://drivercheck-platform.onrender.com/api/drivers/check/${document}`)
+    const data = await res.json()
 
-    try {
-
-      setLoading(true)
-      setError(null)
-
-      const response = await fetch(
-        `https://drivercheck-platform.onrender.com/api/drivers/check/${document}`
-      )
-
-      const data = await response.json()
-
-      setResult(data)
-
-    } catch (err) {
-
-      setError("Error consultando la API")
-
-    } finally {
-
-      setLoading(false)
-
-    }
+    setReport(data)
 
   }
 
-  return (
+  const getRiskLevel = (score)=>{
+
+    if(score >= 80) return {label:"BAJO RIESGO",color:"green"}
+    if(score >= 50) return {label:"RIESGO MEDIO",color:"orange"}
+    return {label:"ALTO RIESGO",color:"red"}
+
+  }
+
+  return(
 
     <div style={{
-      padding: "40px",
-      fontFamily: "Arial",
-      background: "#f5f6fa",
-      minHeight: "100vh"
+      fontFamily:"Arial",
+      padding:"40px",
+      background:"#f4f6f8",
+      minHeight:"100vh"
     }}>
 
       <h1>DriverCheck Platform</h1>
 
       <div style={{
-        background: "#fff",
-        padding: "20px",
-        borderRadius: "10px",
-        width: "400px",
-        marginTop: "20px"
+        background:"white",
+        padding:"20px",
+        width:"350px",
+        borderRadius:"10px",
+        boxShadow:"0 2px 8px rgba(0,0,0,0.1)"
       }}>
 
         <h3>Consultar Conductor</h3>
 
         <input
-          type="text"
-          placeholder="Documento"
           value={document}
-          onChange={(e) => setDocument(e.target.value)}
+          onChange={(e)=>setDocument(e.target.value)}
+          placeholder="Documento"
           style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px"
+            width:"100%",
+            padding:"10px",
+            marginBottom:"10px"
           }}
         />
 
         <button
-          onClick={checkDriver}
+          onClick={consultar}
           style={{
-            marginTop: "10px",
-            width: "100%",
-            padding: "10px",
-            background: "#2f80ed",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px"
+            width:"100%",
+            padding:"10px",
+            background:"#2f6fed",
+            color:"white",
+            border:"none",
+            borderRadius:"6px"
           }}
         >
           Verificar
@@ -91,44 +72,96 @@ export default function Home() {
 
       </div>
 
-      {loading && (
-        <p style={{ marginTop: "20px" }}>
-          Consultando fuentes...
-        </p>
-      )}
-
-      {error && (
-        <p style={{ marginTop: "20px", color: "red" }}>
-          {error}
-        </p>
-      )}
-
-      {result && (
+      {report && (
 
         <div style={{
-          marginTop: "30px",
-          background: "#fff",
-          padding: "25px",
-          borderRadius: "10px",
-          width: "600px"
+          background:"white",
+          marginTop:"30px",
+          padding:"30px",
+          width:"600px",
+          borderRadius:"10px",
+          boxShadow:"0 2px 10px rgba(0,0,0,0.1)"
         }}>
 
           <h2>Reporte de Verificación</h2>
 
-          <p><b>Nombre:</b> {result.person.name}</p>
-          <p><b>Documento:</b> {result.person.document}</p>
-          <p><b>Fecha:</b> {new Date(result.date).toLocaleString()}</p>
+          <p><b>Nombre:</b> {report.person.name}</p>
+          <p><b>Documento:</b> {report.person.document}</p>
+          <p><b>Fecha:</b> {new Date(report.date).toLocaleString()}</p>
+
+          <h3>Score de Riesgo</h3>
+
+          {(() => {
+
+            const risk = getRiskLevel(report.score)
+
+            return(
+
+              <div>
+
+                <div style={{
+                  fontWeight:"bold",
+                  color:risk.color,
+                  marginBottom:"10px"
+                }}>
+                  {risk.label}
+                </div>
+
+                <div style={{
+                  width:"100%",
+                  height:"20px",
+                  background:"#eee",
+                  borderRadius:"10px"
+                }}>
+
+                  <div style={{
+                    width:`${report.score}%`,
+                    height:"20px",
+                    background:risk.color,
+                    borderRadius:"10px"
+                  }}></div>
+
+                </div>
+
+                <p>{report.score}/100</p>
+
+              </div>
+
+            )
+
+          })()}
 
           <h3>Fuentes Consultadas</h3>
 
-          {result.sources.map((s, i) => (
-            <div key={i}>
-              <p><b>{s.source}</b>: {s.result}</p>
+          {report.sources.map((s,i)=>(
+
+            <div key={i} style={{
+              padding:"10px",
+              border:"1px solid #eee",
+              borderRadius:"6px",
+              marginBottom:"10px"
+            }}>
+              <b>{s.source}</b>
+              <p>{s.result}</p>
             </div>
+
           ))}
 
-          <h3>Score de Riesgo</h3>
-          <p>{result.score}</p>
+          <a
+            href={`https://drivercheck-platform.onrender.com/api/drivers/report/${report.person.document}`}
+            target="_blank"
+          >
+            <button style={{
+              marginTop:"20px",
+              padding:"10px 20px",
+              background:"#111",
+              color:"white",
+              border:"none",
+              borderRadius:"6px"
+            }}>
+              Descargar Reporte PDF
+            </button>
+          </a>
 
         </div>
 
