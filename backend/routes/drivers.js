@@ -1,43 +1,109 @@
 const express = require("express")
+
 const router = express.Router()
 
-const scoreEngine = require("../../ai-engine/score")
+// simulaciones de consulta
+async function consultarPolicia(document) {
 
-router.get("/check/:document",(req,res)=>{
+  return {
+    source: "Policía Nacional",
+    result: "Sin antecedentes"
+  }
+
+}
+
+async function consultarProcuraduria(document) {
+
+  return {
+    source: "Procuraduría General",
+    result: "Sin sanciones disciplinarias"
+  }
+
+}
+
+async function consultarRamaJudicial(document) {
+
+  return {
+    source: "Rama Judicial",
+    result: "Sin procesos activos"
+  }
+
+}
+
+async function consultarSimit(document) {
+
+  return {
+    source: "SIMIT",
+    result: "Sin multas registradas"
+  }
+
+}
+
+function calcularScore(results) {
+
+  let score = 100
+
+  results.forEach(r => {
+
+    if (r.result.toLowerCase().includes("multa")) {
+      score -= 20
+    }
+
+    if (r.result.toLowerCase().includes("antecedente")) {
+      score -= 40
+    }
+
+    if (r.result.toLowerCase().includes("proceso")) {
+      score -= 30
+    }
+
+  })
+
+  return score
+
+}
+
+router.get("/check/:document", async (req,res)=>{
 
   const document = req.params.document
 
-  // Simulación de datos (luego se conectará a APIs reales)
+  try{
 
-  const person = {
-    name: "Juan Carlos Pérez",
-    document: document
-  }
+    const results = await Promise.all([
 
-  const sources = [
-    {
-      source: "Policía Nacional",
-      result: "Sin antecedentes"
-    },
-    {
-      source: "Procuraduría General",
-      result: "Sin sanciones"
+      consultarPolicia(document),
+      consultarProcuraduria(document),
+      consultarRamaJudicial(document),
+      consultarSimit(document)
+
+    ])
+
+    const score = calcularScore(results)
+
+    const report = {
+
+      person:{
+        name:"Consulta por documento",
+        document:document
+      },
+
+      date:new Date(),
+
+      sources:results,
+
+      score
+
     }
-  ]
 
-  const police = "sin antecedentes"
-  const procuraduria = "sin sanciones"
+    res.json(report)
 
-  const score = scoreEngine.calculate(police,procuraduria)
+  }catch(error){
 
-  const report = {
-    person,
-    sources,
-    score,
-    date: new Date()
+    res.status(500).json({
+      error:"Error consultando fuentes"
+    })
+
   }
-
-  res.json(report)
 
 })
 
