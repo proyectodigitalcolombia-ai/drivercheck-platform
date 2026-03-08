@@ -66,9 +66,11 @@ function calcularScore(results){
 
     const text = r.result.toLowerCase()
 
-    if(text.includes("multa")) score -= 20
-    if(text.includes("antecedente")) score -= 40
-    if(text.includes("proceso")) score -= 30
+    // solo restar puntos si hay problemas reales
+    if(text.includes("multa pendiente")) score -= 20
+    if(text.includes("antecedentes activos")) score -= 40
+    if(text.includes("proceso activo")) score -= 30
+    if(text.includes("sanción vigente")) score -= 25
 
   })
 
