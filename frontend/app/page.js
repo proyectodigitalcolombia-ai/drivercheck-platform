@@ -1,50 +1,113 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
-export default function Home() {
+export default function Dashboard() {
 
   const [document,setDocument] = useState("")
   const [result,setResult] = useState(null)
+  const [loading,setLoading] = useState(false)
 
   const checkDriver = async () => {
 
-    const res = await fetch(`https://drivercheck-api.muit.onrender.com/api/drivers/check/${document}`)
+    setLoading(true)
+
+    const res = await fetch(`https://drivercheck-platform.onrender.com/api/drivers/check/${document}`)
 
     const data = await res.json()
 
     setResult(data)
+    setLoading(false)
   }
 
   return (
 
-    <div style={{padding:"40px",fontFamily:"Arial"}}>
+    <div style={{display:"flex",fontFamily:"Arial"}}>
 
-      <h1>DriverCheck Platform</h1>
+      {/* Sidebar */}
 
-      <input
-        placeholder="Driver document"
-        value={document}
-        onChange={(e)=>setDocument(e.target.value)}
-      />
+      <div style={{
+        width:"220px",
+        height:"100vh",
+        background:"#111",
+        color:"#fff",
+        padding:"20px"
+      }}>
 
-      <button onClick={checkDriver}>
-        Check Driver
-      </button>
+        <h2>DriverCheck</h2>
 
-      {result && (
+        <p>Dashboard</p>
+        <p>Consultas</p>
+        <p>Empresas</p>
+        <p>API</p>
 
-        <div style={{marginTop:"20px"}}>
+      </div>
 
-          <h3>Result</h3>
+      {/* Main */}
 
-          <pre>
-            {JSON.stringify(result,null,2)}
-          </pre>
+      <div style={{flex:1,padding:"40px"}}>
+
+        <h1>Verificación de Conductores</h1>
+
+        <div style={{
+          background:"#f4f4f4",
+          padding:"20px",
+          borderRadius:"10px",
+          width:"400px"
+        }}>
+
+          <input
+            style={{
+              padding:"10px",
+              width:"100%",
+              marginBottom:"10px"
+            }}
+            placeholder="Documento del conductor"
+            value={document}
+            onChange={(e)=>setDocument(e.target.value)}
+          />
+
+          <button
+            style={{
+              padding:"10px",
+              width:"100%",
+              background:"#000",
+              color:"#fff",
+              border:"none",
+              cursor:"pointer"
+            }}
+            onClick={checkDriver}
+          >
+
+            {loading ? "Consultando..." : "Verificar conductor"}
+
+          </button>
 
         </div>
 
-      )}
+        {result && (
+
+          <div style={{
+            marginTop:"30px",
+            background:"#fff",
+            padding:"20px",
+            border:"1px solid #ddd",
+            borderRadius:"10px",
+            width:"400px"
+          }}>
+
+            <h3>Resultado</h3>
+
+            <p><b>Documento:</b> {result.document}</p>
+            <p><b>Policía:</b> {result.police}</p>
+            <p><b>Procuraduría:</b> {result.procuraduria}</p>
+            <p><b>Score:</b> {result.score}</p>
+
+          </div>
+
+        )}
+
+      </div>
 
     </div>
 
